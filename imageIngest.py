@@ -13,12 +13,10 @@ import google.auth
 # into a GCP bucket, but this restriction may eventually be relaxed.
 # This code has the following specific responsibilities:
 #    1) Read the specified yaml file for needed configs including account info
-#    2) Use the account info to authenticate to Google
-#    3) Read a manifest file that describes the files to be uploaded and their consent groups
-#    4) Create a Google DICOM dataset for each separate consent group in the study
-#    5) Add the appropriate permissions for the dataset
-#    6) Export each file in the manifest from the bucket to the Google Health API
-#    7) Optionally export the datasets to BigQuery
+#    2) Create a Google DICOM dataset for each separate consent group in the study
+#    3) Import each file from the bucket to the Google Health API
+#    4) Add the appropriate permissions for the dataset
+#    5) Optionally export the datasets to BigQuery
 #############################################################################################
 
 
@@ -170,42 +168,57 @@ def main():
    # 1) Read the yaml file and grab the scripts and shortcuts
    parsedYaml = yaml.load(inFile, Loader=yaml.FullLoader)
    print (parsedYaml)
-
-   # 2) For now the authentication is not done in this program
-   # 3) The consent groups are currently in the yaml. These may eventually come from the 
-   #    telemetry file
-   #4 Create the datasets and datastores needed
+   print (parsedYaml["study"])
+   study  =  (parsedYaml["study"])
+   print (study["id"])
    project = parsedYaml["project"]
-   studyId = parsedYaml["study-id"]
    region =  parsedYaml["region"]
+   studyId = study["id"]
    print ("project " + project + " studyId " + studyId)
 
-   consentGroups = parsedYaml["consent-groups"]
+   consentGroups = study["consent-groups"]
+   print (consentGroups)
+
+   # 2) The consent groups are currently in the yaml. These may eventually come from the 
+   #    telemetry file
+   thisDataSetName = "dataset--" + studyId
+   # Create the requested dataset.
+   create_dataset(project, region, thisDataSetName)
+
    for i in range(len(consentGroups)):
       thisConsentGroup = consentGroups[i]
       for key in thisConsentGroup:
          print (key)
-         thisDataSetName = "dataset--" + studyId + "--" + key
          thisDataStoreName = studyId + "--" + key
          print (thisDataSetName)
-
-         # Create the requested dataset.
-         create_dataset(project, region, thisDataSetName)
 
          # Create the dicom store
          create_dicom_store(project, region, thisDataSetName, thisDataStoreName)
 
-         # Import the data.  Note that we are assuming that the datastore name and the 
+         # 3) Import the data.  Note that we are assuming that the datastore name and the 
          # bucket name are the same
          uri = thisDataStoreName + "/**.dcm"
          import_dicom_instance(project, region, thisDataSetName, thisDataStoreName, uri)
          print (type(thisConsentGroup[key]))
          print (thisConsentGroup[key])
- #       set_dicom_store_iam_policy( project, 
- #                                   region, 
- #                                   thisDataSetName, 
- #                                   thisDataStoreName, 
- #                                   member, "healthcare.datasetViewer", etag=None)
+         # The values of the key are the address we want to allow to view the data.
+         userList = []
+         allowedEmails = thisConsentGroup.get(key)
+         for thisEmail in allowedEmails:
+            thisUserEmail = "user:" + thisEmail
+            print ("Giving permission to " + thisEmail + " as " + thisUserEmail)
+            userList.append(thisUserEmail)
+
+         # Note that the documentation for this Google function says it sets a single
+         # member to a single role. In fact if you pass a list, it adds the role
+         # for each member of the list.
+         # It may be that we are going to want to use groups instead of individual accounts,
+         # but it works for the moment.
+         set_dicom_store_iam_policy( project, 
+                                     region, 
+                                     thisDataSetName, 
+                                     thisDataStoreName, 
+                                     userList, "roles/viewer", etag=None)
 
 if __name__ == "__main__":
    main()

@@ -12,14 +12,15 @@ region: "northamerica-northeast1"
 ##########################################################################
 # The study id
 ##########################################################################
-study-id: "bdcdicomtest"
+study:   
+   id: "bdcdicomtest"
 
-##########################################################################
-# Array of consent groups, the values are the authorized users
-##########################################################################
-consent-groups:
-   - c1:
-      - howard@renci.org
-   - c2:
-      - howard@renci.org
-      - scox@renci.org
+   ##########################################################################
+   # Array of consent groups, the values are the authorized users
+   ##########################################################################
+   consent-groups:
+      - c1:
+         - howard@renci.org
+      - c2:
+         - howard@renci.org
+         - scox@renci.org
