@@ -20,7 +20,7 @@ import google.auth
 #############################################################################################
 
 
-# This code lifted shamelessly from https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/datasets/datasets.py
+# Code credit: https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/datasets/datasets.py
 
 # [START healthcare_get_client]
 def get_client():
@@ -54,7 +54,7 @@ def create_dataset(project_id, cloud_region, dataset_id):
     return response
 # [END healthcare_create_dataset]
 
-# From https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/datasets/datasets.py
+# Code credit:  https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/datasets/datasets.py
 # [START healthcare_create_dicom_store]
 def create_dicom_store(project_id, cloud_region, dataset_id, dicom_store_id):
     """Creates a new DICOM store within the parent dataset."""
@@ -76,7 +76,7 @@ def create_dicom_store(project_id, cloud_region, dataset_id, dicom_store_id):
     return response
 # [END healthcare_create_dicom_store]
 
-# From https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/dicom/dicom_stores.py
+# Code credit:  https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/dicom/dicom_stores.py
 # [START healthcare_import_dicom_instance]
 def import_dicom_instance(
     project_id, cloud_region, dataset_id, dicom_store_id, content_uri
