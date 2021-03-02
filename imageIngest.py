@@ -54,6 +54,53 @@ def create_dataset(project_id, cloud_region, dataset_id):
     return response
 # [END healthcare_create_dataset]
 
+# [START healthcare_dataset_set_iam_policy]
+def set_dataset_iam_policy(
+        project_id,
+        cloud_region,
+        dataset_id,
+        member,
+        role,
+        etag=None):
+    """Sets the IAM policy for the specified dataset.
+        A single member will be assigned a single role. A member can be any of:
+        - allUsers, that is, anyone
+        - allAuthenticatedUsers, anyone authenticated with a Google account
+        - user:email, as in 'user:somebody@example.com'
+        - group:email, as in 'group:admins@example.com'
+        - domain:domainname, as in 'domain:example.com'
+        - serviceAccount:email,
+            as in 'serviceAccount:my-other-app@appspot.gserviceaccount.com'
+        A role can be any IAM role, such as 'roles/viewer', 'roles/owner',
+        or 'roles/editor'
+    """
+    client = get_client()
+    dataset_name = 'projects/{}/locations/{}/datasets/{}'.format(
+        project_id, cloud_region, dataset_id)
+
+    policy = {
+        "bindings": [
+            {
+                "role": role,
+                "members": [
+                    member
+                ]
+            }
+        ]
+    }
+
+    if etag is not None:
+        policy['etag'] = etag
+
+    request = client.projects().locations().datasets().setIamPolicy(
+        resource=dataset_name, body={'policy': policy})
+    response = request.execute()
+
+    print('etag: {}'.format(response.get('name')))
+    print('bindings: {}'.format(response.get('bindings')))
+    return response
+# [END healthcare_dataset_set_iam_policy]
+
 # Code credit:  https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/healthcare/api-client/v1/datasets/datasets.py
 # [START healthcare_create_dicom_store]
 def create_dicom_store(project_id, cloud_region, dataset_id, dicom_store_id):
@@ -181,14 +228,15 @@ def main():
 
    # 2) The consent groups are currently in the yaml. These may eventually come from the 
    #    telemetry file
-   thisDataSetName = "dataset--" + studyId
-   # Create the requested dataset.
-   create_dataset(project, region, thisDataSetName)
-
    for i in range(len(consentGroups)):
       thisConsentGroup = consentGroups[i]
       for key in thisConsentGroup:
          print (key)
+
+         # Create the requested dataset.
+         thisDataSetName = "dataset--" + studyId + "--" + key
+         create_dataset(project, region, thisDataSetName)
+
          thisDataStoreName = studyId + "--" + key
          print (thisDataSetName)
 
@@ -214,10 +262,9 @@ def main():
          # for each member of the list.
          # It may be that we are going to want to use groups instead of individual accounts,
          # but it works for the moment.
-         set_dicom_store_iam_policy( project, 
+         set_dataset_iam_policy( project, 
                                      region, 
                                      thisDataSetName, 
-                                     thisDataStoreName, 
                                      userList, "roles/viewer", etag=None)
 
 if __name__ == "__main__":
